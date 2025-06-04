@@ -1,0 +1,339 @@
+/*============================================================================== 
+  Especificação JCup para Analisador Sintático 
+==============================================================================*/
+
+package compiler;
+
+import java_cup.runtime.*;
+
+/* ==================== Símbolos terminais ==================== */
+terminal IF, ELSE, WHILE, FOR, RETURN;
+terminal INT, FLOAT, DOUBLE, VOID, MAIN;
+terminal TRUE, FALSE;
+terminal PLUS, MINUS, MULT, DIV, MOD;
+terminal ASSIGN, EQ, NE, LT, LE, GT, GE;
+terminal AND, OR, NOT;
+terminal SEMICOLON, COMMA;
+terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET;
+terminal Integer INTEGER_LITERAL;
+terminal Float FLOAT_LITERAL;
+terminal Double DOUBLE_LITERAL;
+terminal String IDENTIFIER;
+
+/* ==================== Símbolos não-terminais ==================== */
+non terminal Object program;
+non terminal Object declaration_list;
+non terminal Object declaration;
+non terminal Object var_declaration;
+non terminal Object fun_declaration;
+non terminal Object type_specifier;
+non terminal Object params;
+non terminal Object param_list;
+non terminal Object param;
+non terminal Object compound_stmt;
+non terminal Object block_item_list;
+non terminal Object block_item;
+non terminal Object statement;
+non terminal Object expression_stmt;
+non terminal Object selection_stmt;
+non terminal Object iteration_stmt;
+non terminal Object return_stmt;
+non terminal Object expression;
+non terminal Object expression_opt;
+non terminal Object var;
+non terminal Object simple_expression;
+non terminal Object relop;
+non terminal Object additive_expression;
+non terminal Object addop;
+non terminal Object term;
+non terminal Object mulop;
+non terminal Object factor;
+non terminal Object call;
+non terminal Object args;
+non terminal Object arg_list;
+
+/* ==================== Precedência e associatividade ==================== */
+precedence left OR;
+precedence left AND;
+precedence left EQ, NE;
+precedence left LT, LE, GT, GE;
+precedence left PLUS, MINUS;
+precedence left MULT, DIV, MOD;
+precedence right NOT;
+precedence left LPAREN, RPAREN;
+
+/* ==================== Início da gramática ==================== */
+start with program;
+
+program ::= declaration_list:dl
+    {: 
+       System.out.println("Programa parseado com sucesso!"); 
+       RESULT = dl; 
+    :}
+    ;
+
+declaration_list ::= declaration_list:dl declaration:d
+    {: RESULT = dl; :}
+    | declaration:d
+      {: /* criamos uma lista simples */ RESULT = d; :}
+    ;
+
+declaration ::= var_declaration:vd
+    {: RESULT = vd; :}
+    | fun_declaration:fd
+      {: RESULT = fd; :}
+    ;
+
+fun_declaration ::= type_specifier:ts MAIN LPAREN params:p RPAREN compound_stmt:cs
+    {: 
+       System.out.println("Declaração de função: " + ts + " main"); 
+       RESULT = null; 
+    :}
+    ;
+
+var_declaration ::= type_specifier:ts IDENTIFIER:id SEMICOLON
+    {: 
+       System.out.println("Declaração de variável: " + ts + " " + id); 
+       RESULT = null; 
+    :}
+    | type_specifier:ts IDENTIFIER:id LBRACKET INTEGER_LITERAL:num RBRACKET SEMICOLON
+    {: 
+       System.out.println("Declaração de array: " + ts + " " + id + "[" + num + "]"); 
+       RESULT = null; 
+    :}
+    ;
+
+type_specifier ::= INT
+    {: RESULT = "int"; :}
+    | FLOAT
+    {: RESULT = "float"; :}
+    | DOUBLE
+    {: RESULT = "double"; :}
+    | VOID
+    {: RESULT = "void"; :}
+    ;
+
+params ::= param_list:pl
+    {: RESULT = pl; :}
+    | VOID
+      {: RESULT = null; /* param void */ :}
+    | /* empty */
+      {: RESULT = null; :}
+    ;
+
+param_list ::= param_list:pl COMMA param:p
+    {: RESULT = null; /* podemos montar lista, mas ignorado aqui */ :}
+    | param:p
+      {: RESULT = p; :}
+    ;
+
+param ::= type_specifier:ts IDENTIFIER:id
+    {: 
+       System.out.println("Parâmetro: " + ts + " " + id); 
+       RESULT = null; 
+    :}
+    | type_specifier:ts IDENTIFIER:id LBRACKET RBRACKET
+    {: 
+       System.out.println("Parâmetro array: " + ts + " " + id + "[]"); 
+       RESULT = null; 
+    :}
+    ;
+
+compound_stmt ::= LBRACE block_item_list:bil RBRACE
+    {: 
+       System.out.println("Bloco de comandos"); 
+       RESULT = bil; 
+    :}
+    ;
+
+block_item_list ::= block_item_list:bil block_item:bi
+    {: RESULT = null; /* lista de itens do bloco, ignorada */ :}
+    | /* empty */
+      {: RESULT = null; :}
+    ;
+
+block_item ::= var_declaration:vd
+    {: RESULT = vd; :}
+    | statement:s
+      {: RESULT = s; :}
+    ;
+
+statement ::= expression_stmt:es
+    {: RESULT = es; :}
+    | compound_stmt:cs
+      {: RESULT = cs; :}
+    | selection_stmt:ss
+      {: RESULT = ss; :}
+    | iteration_stmt:is
+      {: RESULT = is; :}
+    | return_stmt:rs
+      {: RESULT = rs; :}
+    ;
+
+expression_stmt ::= expression:e SEMICOLON
+    {: 
+       // Quando e for null (isto é, apenas “;”), imprimimos apenas “Expressão vazia”
+       if (e != null) System.out.println("Expressão: " + e);
+       else System.out.println("Expressão vazia"); 
+       RESULT = e; 
+    :}
+    | SEMICOLON
+      {: 
+         System.out.println("Expressão vazia (ponto-e-vírgula isolado)"); 
+         RESULT = null; 
+      :}
+    ;
+
+selection_stmt ::= IF LPAREN expression:e RPAREN statement:s
+    {: 
+       System.out.println("Comando IF"); 
+       RESULT = null; 
+    :}
+    | IF LPAREN expression:e RPAREN statement:s1 ELSE statement:s2
+    {: 
+       System.out.println("Comando IF-ELSE"); 
+       RESULT = null; 
+    :}
+    ;
+
+iteration_stmt ::= WHILE LPAREN expression:e RPAREN statement:s
+    {: 
+       System.out.println("Comando WHILE"); 
+       RESULT = null; 
+    :}
+    | FOR LPAREN expression_opt:e1 SEMICOLON expression_opt:e2 SEMICOLON expression_opt:e3 RPAREN statement:s
+    {: 
+       System.out.println("Comando FOR"); 
+       RESULT = null; 
+    :}
+    ;
+
+expression_opt ::= expression:e 
+    {: RESULT = e; :}
+    | /* empty */ 
+      {: RESULT = null; :}
+    ;
+
+return_stmt ::= RETURN SEMICOLON
+    {: 
+       System.out.println("RETURN"); 
+       RESULT = null; 
+    :}
+    | RETURN expression:e SEMICOLON
+    {: 
+       System.out.println("RETURN com expressão"); 
+       RESULT = e; 
+    :}
+    ;
+
+expression ::= var:v ASSIGN expression:e
+    {: 
+       System.out.println("Atribuição: " + v + " = " + e); 
+       RESULT = null; 
+    :}
+    | simple_expression:se
+      {: 
+         // Em casos de chamadas de função ou expressões lógicas
+         RESULT = se; 
+      :}
+    ;
+
+var ::= IDENTIFIER:id
+    {: 
+       RESULT = id; 
+    :}
+    | IDENTIFIER:id LBRACKET expression:e RBRACKET
+    {: 
+       RESULT = id + "[" + e + "]"; 
+    :}
+    ;
+
+simple_expression ::= additive_expression:ae relop:ro additive_expression:ae2
+    {: 
+       RESULT = ae + " " + ro + " " + ae2; 
+    :}
+    | additive_expression:ae
+      {: RESULT = ae; :}
+    ;
+
+relop ::= LE   {: RESULT = "<="; :}
+    | LT       {: RESULT = "<"; :}
+    | GT       {: RESULT = ">"; :}
+    | GE       {: RESULT = ">="; :}
+    | EQ       {: RESULT = "=="; :}
+    | NE       {: RESULT = "!="; :}
+    ;
+
+additive_expression ::= additive_expression:ae addop:ao term:t
+    {: 
+       RESULT = ae + " " + ao + " " + t; 
+    :}
+    | term:t
+      {: RESULT = t; :}
+    ;
+
+addop ::= PLUS  {: RESULT = "+"; :}
+    | MINUS       {: RESULT = "-"; :}
+    ;
+
+term ::= term:t mulop:mo factor:f
+    {: 
+       RESULT = t + " " + mo + " " + f; 
+    :}
+    | factor:f
+      {: RESULT = f; :}
+    ;
+
+mulop ::= MULT  {: RESULT = "*"; :}
+    | DIV         {: RESULT = "/"; :}
+    | MOD         {: RESULT = "%"; :}
+    ;
+
+factor ::= LPAREN expression:e RPAREN
+    {: 
+       RESULT = "(" + e + ")"; 
+    :}
+    | var:v
+      {: RESULT = v; :}
+    | call:c
+      {: RESULT = c; :}
+    | INTEGER_LITERAL:num
+      {: 
+         RESULT = num.toString(); 
+      :}
+    | FLOAT_LITERAL:num
+      {: 
+         RESULT = num.toString(); 
+      :}
+    | DOUBLE_LITERAL:num
+      {: 
+         RESULT = num.toString(); 
+      :}
+    | TRUE
+      {: 
+         RESULT = "true"; 
+      :}
+    | FALSE
+      {: 
+         RESULT = "false"; 
+      :}
+    ;
+
+call ::= IDENTIFIER:id LPAREN args:a RPAREN
+    {: 
+       System.out.println("Chamada de função: " + id); 
+       RESULT = null; 
+    :}
+    ;
+
+args ::= arg_list:al
+    {: RESULT = al; :}
+    | /* empty */
+      {: RESULT = null; :}
+    ;
+
+arg_list ::= arg_list:al COMMA expression:e
+    {: RESULT = null; /* lista ignorada */ :}
+    | expression:e
+      {: RESULT = e; :}
+    ;
