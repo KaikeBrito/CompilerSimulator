@@ -138,7 +138,7 @@ No diretório raiz do projeto:
 
 ```bash
 cd compiler
-java -jar ../lib/jflex-full-1.9.1.jar Scanner.flex
+java -jar "lib\jflex-full-1.9.1.jar" -d . "compiler\scanner.flex"
 ```
 
 * Isso criará (ou sobrescreverá) o arquivo `compiler/Scanner.java`.
@@ -149,7 +149,7 @@ java -jar ../lib/jflex-full-1.9.1.jar Scanner.flex
 Ainda no diretório `compiler/`:
 
 ```bash
-java -jar ../lib/java-cup-11b.jar -parser parser -destdir . parser.cup
+java -jar "lib\java-cup-11b.jar" -destdir . -parser parser -symbols sym "compiler\parser.cup"
 ```
 
 * O parâmetro `-parser parser` indica que o arquivo gerado para o parser se chamará `parser.java`.
@@ -173,7 +173,7 @@ javac -cp ".:lib/java-cup-11b-runtime.jar" compiler/*.java
 
 ```powershell
 # A partir da raiz do projeto
-javac -cp ".;lib\java-cup-11b-runtime.jar" compiler\*.java
+javac -cp ".;lib\java-cup-11b.jar;lib\java-cup-11b-runtime.jar;lib\jflex-full-1.9.1.jar" compiler\*.java
 ```
 
 * O `-cp` inclui o JAR de runtime do JavaCUP, que é necessário no momento de compilação (pois a classe `parser.java` faz referência a pacotes do JavaCUP).
@@ -192,13 +192,13 @@ O repositório já inclui um `input.txt` de exemplo. Para testar:
 #### Linux/macOS (bash)
 
 ```bash
-java -cp ".:lib/java-cup-11b-runtime.jar" compiler.Main compiler/input.txt
+java -cp ".;lib\java-cup-11b.jar;lib\java-cup-11b-runtime.jar;lib\jflex-full-1.9.1.jar" compiler.Main input.txt
 ```
 
 #### Windows (PowerShell/CMD)
 
 ```powershell
-java -cp ".;lib\java-cup-11b-runtime.jar" compiler.Main compiler\input.txt
+java -cp ".;lib\java-cup-11b.jar;lib\java-cup-11b-runtime.jar;lib\jflex-full-1.9.1.jar" compiler.Main input.txt
 ```
 
 * A saída esperada deve listar os tokens lidos e mostrar as mensagens de parsing, encerrando com “✅ COMPILAÇÃO CONCLUÍDA COM SUCESSO!”.
